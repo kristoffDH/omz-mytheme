@@ -12,11 +12,12 @@ function _wt_time_segment() {
 }
 
 # ─────────────────────────────────────
-# 메모리 사용률 -   {{ round .PhysicalPercentUsed 0 }}%
-# Linux: free, macOS: vm_stat 기준
+# 메모리 사용률 -   대략적인 사용률(%)
+# Linux: free, macOS: memory_pressure → vm_stat 순
 # ─────────────────────────────────────
 function _wt_mem_segment() {
   local percent="?"
+
   if command -v free >/dev/null 2>&1; then
     # Linux
     local used total
@@ -24,14 +25,24 @@ function _wt_mem_segment() {
     if [[ -n "$total" && "$total" -gt 0 ]]; then
       percent=$(( used * 100 / total ))
     fi
+
+  elif command -v memory_pressure >/dev/null 2>&1; then
+    # macOS: 가장 안정적인 방법 - free percentage 사용
+    # 예: "System-wide memory free percentage: 21%"
+    local free_pct
+    free_pct=$(memory_pressure -Q 2>/dev/null | awk -F': ' '/System-wide memory free percentage/ {gsub("%","",$2); print $2}')
+    if [[ -n "$free_pct" ]]; then
+      percent=$(( 100 - free_pct ))
+    fi
+
   elif [[ "$OSTYPE" == darwin* ]] && command -v vm_stat >/dev/null 2>&1; then
-    # macOS
+    # 예전 macOS 버전용 fallback (대략적인 계산)
     local free active inactive speculative wired compressed
     free=$(vm_stat | awk '/Pages free/ {gsub("\\.","",$3); print $3}')
     active=$(vm_stat | awk '/Pages active/ {gsub("\\.","",$3); print $3}')
     inactive=$(vm_stat | awk '/Pages inactive/ {gsub("\\.","",$3); print $3}')
     speculative=$(vm_stat | awk '/Pages speculative/ {gsub("\\.","",$3); print $3}')
-    wired=$(vm_stat | awk '/Pages wired down/ {gsub("\\.","",$4); print $4}')
+    wired=$(vm_stat | awk '/Pages wired/ {gsub("\\.","",$4); print $4}')
     compressed=$(vm_stat | awk '/Pages occupied by compressor/ {gsub("\\.","",$5); print $5}')
 
     local used_pages=$(( active + inactive + speculative + wired + compressed ))
