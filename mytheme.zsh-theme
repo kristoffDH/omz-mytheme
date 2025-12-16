@@ -233,7 +233,7 @@ function _wt_build_prompt() {
   local line3
   line3="$(_wt_footer_segment)"
 
-  PROMPT="${line1}
+  PROMPT=$'\n'"${line1}
 ${line2}
 ${line3}%f "
 
