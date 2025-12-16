@@ -244,6 +244,16 @@ function _wt_precmd() {
   _wt_build_prompt
 }
 
+# zsh-transient-prompt 설정
+# 현재 프롬프트는 우리가 만든 PROMPT, RPROMPT 를 그냥 쓰고
+# 이전 프롬프트(압축 버전)는 한 줄짜리 심플 프롬프트로 사용
+TRANSIENT_PROMPT_PROMPT=$PROMPT
+TRANSIENT_PROMPT_RPROMPT=$RPROMPT
+
+# 이전 프롬프트: 시간 + cwd 한 줄만 표시 (예시는 마음대로 바꿔도 됨)
+TRANSIENT_PROMPT_TRANSIENT_PROMPT='%F{240}%D{%m-%d %H:%M:%S}%f %F{39}%~%f %# '
+TRANSIENT_PROMPT_TRANSIENT_RPROMPT=''
+
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd _wt_precmd
 
